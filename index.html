@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<input type="file" id="file">
+	<button id="btn">draw</button>
+	<canvas id="canvas" width="1920" height="1080"></canvas>
+</body>
+<script>
+	let data;
+document.getElementById('btn').onclick = async () => {
+	data = JSON.parse(await document.getElementById('file').files[0]?.text() || '{}');
+	console.log(data);
+	const selectedAnalysis = 1;
+	const case1var = ['I feel stress because of school.', 'I get distracted easily and have a hard time concentrating.', 'I procrastinate on schoolwork.'][2];
+	const canvas = document.getElementById("canvas");
+	const ctx = canvas.getContext("2d");
+	ctx.fillStyle = 'white';
+	ctx.fillRect(0, 0, 1920, 1080);
+	ctx.fillStyle = 'black';
+	let
+		chartW,
+		chartH,
+		Xlabel,
+		Ylabel;
+	switch (selectedAnalysis) {
+		case 0:
+			chartW = 1400;
+			chartH = 800;
+			Xlabel = '';
+			Ylabel = 'Amount of stars';
+			ctx.beginPath();
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height - chartH) / 2);
+			ctx.lineTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.lineTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.stroke();
+			ctx.textBaseline = 'bottom';
+			ctx.font = '28px helvetica';
+			ctx.fillText(Ylabel, (canvas.width - chartW) / 2, (canvas.height - chartH) / 2);
+			ctx.textAlign = 'right';
+			ctx.textBaseline = 'middle';
+			for (let i = 0; i < 7; i++) {
+				if (i === 0 || i === 6) continue;
+				ctx.fillText(i, (canvas.width - chartW) / 2 - 10, (canvas.height + chartH) / 2 - (chartH / 6 * i));
+			}
+			const plot = {
+				stressed: {},
+				distracted: {},
+				procrastinates: {},
+			};
+			// find all amounts of written subjects
+			let amounts = new Set();
+			data.forEach(x => {
+				const y = x['Which of the following subjects are you going to write in your matriculation exam?'].split(';').length - 1;
+				if (y < 5 || y > 8) return; 
+				amounts.add(y);
+				if (!plot.stressed[y]) plot.stressed[y] = {
+					1: 0,
+					2: 0,
+					3: 0,
+					4: 0,
+					5: 0,
+					total: 0
+				};
+				if (!plot.distracted[y]) plot.distracted[y] = {
+					1: 0,
+					2: 0,
+					3: 0,
+					4: 0,
+					5: 0,
+					total: 0
+				};
+				if (!plot.procrastinates[y]) plot.procrastinates[y] = {
+					1: 0,
+					2: 0,
+					3: 0,
+					4: 0,
+					5: 0,
+					total: 0
+				};
+				const stress = x['I feel stress because of school.'];
+				if (stress) {
+					plot.stressed[y][stress]++;
+					plot.stressed[y].total++;
+				}
+				const distracted = x['I get distracted easily and have a hard time concentrating.'];
+				if (distracted) {
+					plot.distracted[y][distracted]++;
+					plot.distracted[y].total++;
+				}
+				const procrastinates = x['I procrastinate on schoolwork.'];
+				if (procrastinates) {
+					plot.procrastinates[y][procrastinates]++;
+					plot.procrastinates[y].total++;
+				}
+			});
+			console.log(plot);
+			amounts = Array.from(amounts).sort();
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'top';
+			ctx.fillText('Stressed', (canvas.width - chartW) / 2 + 0.5 * chartW / 3, (canvas.height + chartH) / 2 + 60);
+			ctx.fillText('Distracted', (canvas.width - chartW) / 2 + 1.5 * chartW / 3, (canvas.height + chartH) / 2 + 60);
+			ctx.fillText('Procrastinates', (canvas.width - chartW) / 2 + 2.5 * chartW / 3, (canvas.height + chartH) / 2 + 60);
+			ctx.beginPath();
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2 + 50);
+			ctx.lineTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2 + 100);
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2 + 50);
+			ctx.lineTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2 + 50);
+			ctx.moveTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.lineTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2 + 100);
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2 + 100);
+			ctx.lineTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2 + 100);
+			ctx.moveTo((canvas.width - chartW) / 2 + 1 * chartW / 3, (canvas.height + chartH) / 2 + 0);
+			ctx.lineTo((canvas.width - chartW) / 2 + 1 * chartW / 3, (canvas.height + chartH) / 2 + 100);
+			ctx.moveTo((canvas.width - chartW) / 2 + 2 * chartW / 3, (canvas.height + chartH) / 2 + 0);
+			ctx.lineTo((canvas.width - chartW) / 2 + 2 * chartW / 3, (canvas.height + chartH) / 2 + 100);
+			ctx.stroke();
+			amounts.forEach((x, j) => {
+				for (let i = 0; i < 3; i++) {
+					const x1 = (canvas.width - chartW) / 2 + chartW * i / 3 + chartW * j / (amounts.length * 3);
+					ctx.fillText(`Writes ${x} subjects`, x1 + chartW / (6 * amounts.length), (canvas.height + chartH) / 2 + 10);
+					ctx.beginPath();
+					ctx.moveTo(x1, (canvas.height + chartH) / 2);
+					ctx.lineTo(x1, (canvas.height + chartH) / 2 + 50)
+					ctx.stroke();
+				}
+			});
+			ctx.textBaseline = 'middle';
+			for (let i = 0; i < 7; i++) {
+				if (i === 0 || i === 6) continue;
+				ctx.fillStyle = 'black';
+				ctx.textAlign = 'right';
+				ctx.fillText(i, (canvas.width - chartW) / 2 - 10, (canvas.height + chartH) / 2 - (chartH / 6 * i));
+				console.log(plot);
+				const data2 = [
+					plot.stressed[5][i] / plot.stressed[5].total,
+					plot.stressed[6][i] / plot.stressed[6].total,
+					plot.distracted[5][i] / plot.distracted[5].total,
+					plot.distracted[6][i] / plot.distracted[6].total,
+					plot.procrastinates[5][i] / plot.procrastinates[5].total,
+					plot.procrastinates[6][i] / plot.procrastinates[6].total
+				]
+				data2.forEach((x, j) => {
+					ctx.fillStyle = j % 2 === 0 ? 'limegreen' : 'orange';
+					ctx.beginPath();
+					ctx.arc((canvas.width - chartW) / 2 + (0.5 + j) * chartW / 6, (canvas.height + chartH) / 2 - (chartH / 6 * i), x * 100, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.fillStyle = 'black';
+					ctx.textAlign = 'center';
+					// ctx.fillText(`${(x * 100).toFixed(0)} %`, (canvas.width - chartW) / 2 + (1 + j) * chartW / 6, (canvas.height + chartH) / 2 - (chartH / 6 * i));
+				});
+			}
+		case 1:
+			// avg and stress
+			chartW = 1400;
+			chartH = 800;
+			Xlabel = 'Average grade';
+			Ylabel = 'Stars';
+			ctx.beginPath();
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height - chartH) / 2);
+			ctx.lineTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.moveTo((canvas.width - chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.lineTo((canvas.width + chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.stroke();
+			ctx.textBaseline = 'bottom';
+			ctx.font = '28px helvetica';
+			ctx.fillText(Ylabel, (canvas.width - chartW) / 2, (canvas.height - chartH) / 2);
+			ctx.fillText(Xlabel, (canvas.width + chartW) / 2, (canvas.height + chartH) / 2);
+			ctx.textAlign = 'right';
+			ctx.textBaseline = 'middle';
+			for (let i = 0; i < 7; i++) {
+				ctx.fillText(i + 4, (canvas.width - chartW) / 2 + (chartW / 6 * i) + 10, (canvas.height + chartH) / 2 + 20);
+				if (i === 0 || i === 6) continue;
+				ctx.fillText(i, (canvas.width - chartW) / 2 - 10, (canvas.height + chartH) / 2 - (chartH / 6 * i));
+			}
+			const data2 = data.map(x => [x['What is your average grade across all subjects?'].match(/([0-9]|,|\.)+/g), x[case1var]]).filter(x => !!x[0] && !!x[1]).map(x => [parseFloat(x[0][0].replace(',', '.')), parseInt(x[1])]).filter(x => x[0] >= 4 && x[0] <= 10);
+			ctx.fillStyle = 'red';
+			(new Set(data2)).forEach(x => {
+				const size = data2.filter(y => y[0] === x[0] && y[1] === x[1]).length;
+				ctx.beginPath();
+				ctx.arc((canvas.width - chartW) / 2 + chartW * (x[0] - 4) / 6, (canvas.height + chartH) / 2 - (chartH / 6 * x[1]), Math.sqrt(size) * 10, 0, 2 * Math.PI);
+				ctx.fill();
+			});
+	}
+}
+</script>
+</html>
